@@ -1,5 +1,4 @@
-# PiDoctor Agents
-
+# Doctor's Office Agent to Agents
 Welcome to **PiDoctor Agents**. I created this project to demonstrate a distributed multi-agent system where each agent runs on its own device, but they all communicate via Agent-to-Agent (A2A) protocols.
 
 ## The Agents
