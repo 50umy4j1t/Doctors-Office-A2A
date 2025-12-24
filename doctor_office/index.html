@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Office - Patient Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .patients-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .patient-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .patient-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .patient-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .patient-illness {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .patient-illness strong {
+            color: #333;
+            margin-right: 8px;
+            min-width: 70px;
+        }
+
+        .illness-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .patient-description {
+            font-size: 14px;
+            color: #888;
+            margin-top: 12px;
+            line-height: 1.5;
+            padding: 12px;
+            background: #f5f5f5;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+        }
+
+        .timestamp {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 15px;
+            text-align: right;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
+
+        .empty-state h2 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4caf50;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div style="display: flex; align-items: center;">
+                <span class="status-indicator"></span>
+                <h1>Doctor's Office Patient Dashboard</h1>
+            </div>
+            <p>Real-time patient information and medical issues</p>
+        </header>
+
+        <div id="patientsContainer" class="patients-grid">
+            <div class="empty-state">
+                <h2>No Patients Yet</h2>
+                <p>Patient records will appear here as they are registered</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Function to render patients
+        function renderPatients(patients) {
+            const container = document.getElementById('patientsContainer');
+            
+            if (!patients || patients.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h2>No Patients Yet</h2>
+                        <p>Patient records will appear here as they are registered</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = patients.map(patient => `
+                <div class="patient-card">
+                    <div class="patient-name">${patient.name}</div>
+                    <div class="patient-illness">
+                        <strong>Issue:</strong>
+                        <span class="illness-badge">${patient.illness}</span>
+                    </div>
+                    ${patient.description ? `
+                        <div class="patient-description">
+                            <strong>Details:</strong><br>
+                            ${patient.description}
+                        </div>
+                    ` : ''}
+                    <div class="timestamp">Added: ${patient.timestamp}</div>
+                </div>
+            `).join('');
+        }
+
+        async function loadPatients() {
+            try {
+                const res = await fetch('/static/patients.json', { cache: 'no-store' });
+                if (!res.ok) throw new Error('Failed to fetch patients');
+                const patients = await res.json();
+                renderPatients(patients);
+                localStorage.setItem('patients', JSON.stringify(patients));
+            } catch (e) {
+                console.warn('Falling back to localStorage, fetch failed:', e.message);
+                const patientsData = localStorage.getItem('patients');
+                if (patientsData) {
+                    try {
+                        const patients = JSON.parse(patientsData);
+                        renderPatients(patients);
+                    } catch (err) {
+                        console.error('Error loading patients from localStorage:', err);
+                    }
+                }
+            }
+        }
+
+        // Global function to add patient (called by Python backend)
+        window.addPatient = function(name, illness, description = '') {
+            const patients = JSON.parse(localStorage.getItem('patients') || '[]');
+            const now = new Date().toLocaleString();
+            
+            patients.push({
+                name: name,
+                illness: illness,
+                description: description,
+                timestamp: now
+            });
+            
+            localStorage.setItem('patients', JSON.stringify(patients));
+            renderPatients(patients);
+            console.log(`Patient added: ${name} - ${illness}`);
+        };
+
+        // Global function to clear all patients
+        window.clearPatients = function() {
+            localStorage.removeItem('patients');
+            renderPatients([]);
+            console.log('All patients cleared');
+        };
+
+        // Load patients on page load and refresh every 2 seconds
+        loadPatients();
+        setInterval(loadPatients, 2000);
+    </script>
+</body>
+</html>

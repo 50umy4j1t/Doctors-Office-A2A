@@ -1,0 +1,6 @@
+agno
+requests
+fastapi
+uvicorn[standard]
+google-genai
+a2a-sdk
