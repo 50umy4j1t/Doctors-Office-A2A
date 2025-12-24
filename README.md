@@ -63,12 +63,3 @@ To save time, you can just create one virtual environment for the whole project 
    python agent.py
    ```
 
-## Git
-To push this project to a remote:
-```bash
-git init
-git add .
-git commit -m "Initial commit: PiDoctor Agents"
-# git remote add origin <your-remote-url>
-# git push -u origin main
-```
